@@ -33,17 +33,18 @@ Cout is meant as a toolset helping to fast produce output of a PoC code and of a
 
 #### Knobs:
 - `TrimTS` set to `true` elides all spaces at the end of lines of output (at Out time).
-- `AutoNL` set to `true` adds a newline to the output of a printer method, if this output came without an ending newline.
-NL is *not* added if fmt string does end with a space (for continuation prints); or if fmt ends with a newline by itself.
+- `AutoNL` set to `true` adds a newline to the output of a printer method, if this output came without an ending newline.  NL is *not* added if fmt string does end with a space (for continuation prints); or if fmt ends with a newline by itself.
 - Prefix, set by method `Prefix(pfx string)`, is prepended to line of output if previous fmt string did not end with a space (signalling continuation), and if current fmt string does *not* start with a newline character (signalling an intentional break).
 - var `cout.MinSize` tells minimal size for non-zero buffers, eg. made with `cout.New(1)`. Default is 256B.
 - var `cout.Capture` if set to non-nil io.Writer captures output of newly created cout buffers. Default is `nil`.
 
 #### Tips:
-- Unlike a `strings.Builder`, you can copy `cout.Bld` struct (64B). But better use a pointer - as all methods are on pointer anyway.
-- "Zero" buffer's printers write to *stdout* immediately. Unless `cout.Capture` variable was assigned a non-nil `io.Writer` before call to `New(0)` - then printers will write there.
+- "Zero" buffer's printers write to *stdout* immediately. Unless `cout.Capture` variable was assigned a non-nil `io.Writer` before call to `New(0)` - then printers will write there. _Note that goodies like TrimTS and AutoNL have no effect with output going straight to the OS_.
 - You can use cout methods on just declared zero buffer - ie. `var bu cout.Bld` - but until you print on it, you may not call inherited `strings.Builder` methods (with no Builder inside these will panic). If zero buffer is desired, better to obtain it via `cout.New(0)`.
 - You can set `cout.Capture = os.Stderr` to change all new buffers output to stderr.
 - You can capture output of all cout printers and have it layered: by eg.  `sink := cout.New(size); cout.Capture = sink` See `cout_test.go` for examples.
-- Cout by itself is not meant for concurrent use, but you can SetOut many buffers output to a serialized io.Writer sink.
+- Unlike a `strings.Builder`, you can copy `cout.Bld` struct (64B). But better use a pointer - as all methods are on pointer anyway.
 - arguments to Bar() are optional. See package docs.
+
+#### Caveat:
+Global state (Capture, MinSize) should not be changed (used) in concurrent code. Use SetOut and explicit sizes instead.
