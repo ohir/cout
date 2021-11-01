@@ -30,6 +30,7 @@ Cout is meant as a toolset helping to fast produce output of a PoC code and of a
   pb.CNL(c bool) c         // calls NL if c is true. Returns c.
   pb.CENL(c bool) c        // calls ENL if c is true. Returns c.
 ```
+[![Go Reference](https://pkg.go.dev/badge/github.com/ohir/cout.svg)](https://pkg.go.dev/github.com/ohir/cout)
 
 #### Knobs:
 - `TrimTS` set to `true` elides all spaces at the end of lines of output (at Out time).
