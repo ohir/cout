@@ -27,21 +27,6 @@ Cout is meant as a toolbox helping us to fast write a PoC code and ad-hoc cli to
   pb.ENL()                 // make sure buffer ends with an empty line.
   pb.CNL(c bool) c         // calls NL if c is true. Returns c.
   pb.CENL(c bool) c        // calls ENL if c is true. Returns c.
-
-Package variables:
-  cout.MinSize  def: 256. Size for non-zero buffers, eg. made with NewBuf(1).
-  cout.Capture  def: nil. Redirect output of all newly created cout buffers.
-
-Tips:
-- You can copy cout.Bld struct (64B) but better use a pointer.
-- You can use cout methods on just declared zero Bld (ie as `var bu cout.Bld`),
-  but until you print into it, you can not call strings.Builder methods
-  (with no Builder inside these will panic). Better to use cout.New(0).
-- You can set cout.Capture = os.Stderr to change all new buffers output to stderr.
-- You can capture output of all cout printers and have it layered: by eg.
-  `sink := cout.New(size); cout.Capture = sink` See cout_test.go for examples.
-- Cout by itself is not meant for concurrent use, but you can SetOut many buffers
-  output to a serialized io.Writer sink.
 */
 package cout
 
@@ -58,14 +43,7 @@ var (
 	MinSize = 1 << 8  // of buffer
 )
 
-// type Bld exposes cout API. It keeps also three knobs:
-// - TrimTS elides all spaces at the end of line (at Out time).
-// - AutoNL affects output as if fmt string had \n at the end if it
-//   had not - noop if fmt string ends with an ascii space.
-// - Prefix is prepended to line if neither previous fmt string ended
-//   with an ascii space, nor the current fmt begins with a newline.
-//   Prefix do not carry printf format commands - it is used as-is.
-//
+// type Bld exposes cout API. It exposes also TrimTS, AutoNL, and Prefix(string) knobs.
 type (
 	Bld struct { // use cout.New
 		*sbu             // our strings.Builder
@@ -101,12 +79,13 @@ func (b *Bld) Printf(fm string, a ...interface{}) {
 }
 
 // func cout.New returns wrapped strings.Builder of requested size
-// with added simple printers: Printf, Pif, PifNot, Bar, NL, ENL, and CNL.
-// Complete strings.Builder API can be used, too.
+// with added simple printers: Printf, Bar, NL, ENL - and their conditional
+// variants.  On returned Bld struct a complete strings.Builder API can be
+// used too.
 //
 // Zero buffer's printers print directly to the output io.Writer, which
-// defaults to stdout - unless cout.Capture var was assigned a non-nil
-// io.Writer before call to New.  Non zero buffer's printers write into
+// defaults to os.Stdout - unless cout.Capture var was assigned a non-nil
+// io.Writer before a call to New.  Non zero buffer's printers write into
 // internal buffer, then accumulated content can be retrieved anytime
 // using String() method, or it can be flushed once, with method Out().
 //
