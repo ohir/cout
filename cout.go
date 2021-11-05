@@ -153,30 +153,21 @@ func (b *Bld) Out() {
 		b.Clear()
 		return
 	} // else trim all tails
-	// fmt.Fprint(b.wout, TrimTailSpace(b.String()))
-	s := b.String()
-	var next, from, to int
-	for { // strings.Index degenerates to Rabin-Karp with " \n"
-		fmt.Fprint(b.wout, s[from:to])
-		from = next
-		var roll uint16
-		for ; next < len(s) && roll != 0x200a; next++ {
-			roll = roll<<8 | uint16(s[next])
-		}
-		if next < len(s) || roll == 0x200a {
-			next-- // \n
-			for to = next - 1; to > from && s[to-1] == ' '; to-- {
+	s, tol := b.String(), 0
+	for {
+		if at := strings.Index(s, " \n"); at >= 0 {
+			for tol = at + 1; tol > 0 && s[tol-1] == ' '; tol-- {
 			}
+			fmt.Fprint(b.wout, s[:tol])
+			s = s[at+1:]
 			continue
-		} // else last piece
-		for to = len(s); to > from && s[to-1] == ' '; to-- {
 		}
-		fmt.Fprint(b.wout, s[from:to])
+		for tol = len(s); tol > 0 && s[tol-1] == ' '; tol-- {
+		}
+		fmt.Fprint(b.wout, s[:tol])
 		switch {
 		case !b.AutoNL:
-		case to == from, // spaces elided to ""
-			to < 1,
-			s[to-1] != '\n':
+		case tol < 1, s[tol-1] != '\n':
 			b.wout.Write([]byte("\n"))
 		}
 		break
